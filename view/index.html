@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<body>
+
+<div ng-app="dashboardApp" ng-controller="dashboardCtrl">
+    <table>
+        <tr ng-repeat="state in states" style="float: left; width: 50px">
+            <td>
+                <input type="button" ng-click="deleteState(state._id)">
+                <p>{{ state.tittle }}</p>
+                <table>
+                    <tr ng-repeat="item in state.items">
+                        <td>
+                                <input type="button" ng-click=""> {{ item.tittle }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>              
+</div>
+
+<script>
+    function loadData($scope, $http)
+    {
+        $http.get("/dashboard")
+        .then(function (response) {
+            $scope.states = response.data.states;
+        });
+    }
+var app = angular.module('dashboardApp', []);
+app.controller('dashboardCtrl', function($scope, $http) {
+    loadData($scope, $http);
+    $scope.deleteState = function(id)
+    {
+        console.log(id);
+        $.ajax({
+            url: '/removeState/' + id,
+            type: 'DELETE',
+            contentType: "application/json",
+            success : function(res){
+                loadData($scope, $http);
+            }
+        })
+    }
+});
+</script>
+
+</body>
+</html>
+
