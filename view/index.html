@@ -5,21 +5,37 @@
 <body>
 
 <div ng-app="dashboardApp" ng-controller="dashboardCtrl">
-    <table>
-        <tr ng-repeat="state in states" style="float: left; width: 50px">
-            <td>
-                <input type="button" ng-click="deleteState(state._id)">
-                <p>{{ state.tittle }}</p>
-                <table>
-                    <tr ng-repeat="item in state.items">
-                        <td>
-                                <input type="button" ng-click=""> {{ item.tittle }}
+    <div ng-model="totalCount">{{totalCount}}</div>  
+    <table style="float: left;">
+        <tr ng-controller="stateCtrl" ng-repeat="state in states" style="float: left; width: 200px;">
+            <td style="width: inherit">
+                <div style="background-color: chartreuse">
+                    <div ng-hide="editable">{{ state.tittle }}&emsp;{{state.items.length}}</div>
+                    <a href="#" ng-hide="editable" ng-click="showEditable(state._id)">Edit data</a>
+                    <input type="text" ng-model="newTittle" ng-show="editable" class="ng-cloak"></input>
+                    <a href="#" ng-show="editable" class="ng-cloak"ng-click="saveEditable(state._id)">Save</a><br>
+                    <input type="button" value="delete state" ng-click="deleteState(state._id)">   
+                </div>         
+                <table style="width: inherit">
+                    <tr ng-controller="itemCtrl" ng-repeat="item in state.items" >
+                        <td style="border: 1px solid black;">
+                            <div ng-hide="editableItem" ng-click="showDescription()">{{ item.tittle }}</div>
+                            <div ng-show="showvalue" class="ng-cloak">
+                                <div ng-hide="editableItem">{{item.description}}</div>
+                                <a href="#" ng-hide="editableItem" ng-click="showEditableItem(state._id)">Edit data</a>
+                                <input type="text" ng-model="newItemTittle" ng-show="editableItem" class="ng-cloak"></input>
+                                <input type="text" ng-model="newItemDescription" ng-show="editableItem" class="ng-cloak"></input>
+                                <a href="#" ng-show="editableItem" class="ng-cloak" ng-click="saveEditableItem(state._id, item._id)">Save</a><br>
+                            </div>
+                            <input type="button" value="delete item" ng-click="deleteItem(state._id, item._id)"> 
                         </td>
                     </tr>
                 </table>
+                <input ng-click="addItem(state._id)" type="button" value="+">
             </td>
         </tr>
-    </table>              
+    </table>
+    <input ng-click="addState()" type="button" value="+" style="float: left;">             
 </div>
 
 <script>
@@ -28,20 +44,114 @@
         $http.get("/dashboard")
         .then(function (response) {
             $scope.states = response.data.states;
+            let sum = 0;
+            $scope.states.forEach(element => {
+                sum += element.items.length;
+            });
+            $scope.totalCount = sum;
         });
     }
 var app = angular.module('dashboardApp', []);
 app.controller('dashboardCtrl', function($scope, $http) {
     loadData($scope, $http);
+    $scope.changeStateTittle = function(id)
+    {
+
+    }
     $scope.deleteState = function(id)
     {
-        console.log(id);
         $.ajax({
             url: '/removeState/' + id,
             type: 'DELETE',
             contentType: "application/json",
             success : function(res){
                 loadData($scope, $http);
+            }
+        })
+    }
+    $scope.addState = function()
+    {
+        $.ajax({
+            url : '/addState/state',
+            type : 'POST',
+            contentType : "application/json",
+            success : function(res){
+                loadData($scope, $http);
+            }
+        })
+    }
+
+    $scope.addItem = function(id)
+    {
+        $.ajax({
+            url : '/addItem/' + id + "/tittle/description",
+            type : 'POST',
+            contentType : "application/json",
+            success : function(res){
+                loadData($scope, $http);
+            }
+        })
+    }
+
+    $scope.deleteItem = function(state, item)
+    {
+        console.log(item)
+        console.log(state)
+        $.ajax({
+            url : '/removeItem/' + state + "/" + item,
+            type: 'DELETE',
+            contentType : "application/json",
+            success : function(res){
+                loadData($scope, $http);
+            }
+        })
+    }
+});
+app.controller('itemCtrl', function($scope, $http){
+    $scope.showDescription = function()
+    {
+        $scope.showvalue = $scope.showvalue ? false : true;
+    }
+    $scope.saveEditableItem = function(id, item)
+    {
+        $scope.item.tittle = $scope.newItemTittle;
+        $scope.item.description = $scope.newItemDescription;
+        $scope.editableItem = $scope.editableItem ? false : true;
+        $.ajax({
+            url : 'editItem/' + id + "/" + item + "/" + $scope.newItemTittle + "/" + $scope.newItemDescription,
+            type : 'PUT',
+            contentType : "application/json",
+            success : function(res)
+            {
+
+            }
+        })
+    }
+    $scope.showEditableItem = function(id)
+    {
+        $scope.newItemTittle = $scope.item.tittle;
+        $scope.newItemDescription = $scope.item.description;
+        $scope.editableItem = $scope.editableItem ? false : true;
+    }
+});
+app.controller('stateCtrl', function($scope, $http)
+{
+    $scope.showEditable = function(id)
+    {
+        $scope.newTittle = $scope.state.tittle;
+        $scope.editable = $scope.editable ? false : true;
+    }
+    $scope.saveEditable = function(id)
+    {
+        $scope.state.tittle = $scope.newTittle;
+        $scope.editable = $scope.editable ? false : true;
+        $.ajax({
+            url : 'editStateTittle/' + id + "/" + $scope.newTittle,
+            type : 'PUT',
+            contentType : "application/json",
+            success : function(res)
+            {
+
             }
         })
     }

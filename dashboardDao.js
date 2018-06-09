@@ -45,22 +45,65 @@ exports.getAllStates = (model, res) => {
 }
 
 exports.addItem = (model, res) => {
+    item = {
+        tittle : model.tittle,
+        description : model.description
+    }
     return state.findOne({
         _id: model.id
     }).then(
         (obj) => {
-            console.log(obj);
-            console.log(model.item);
-            obj.items.push(model.item);
-            console.log(obj);
+            obj.items.push(item);
+            console.log(obj.items);
             obj.save(function (err, data) {
                 res.send({state : state});
                 if (err)
                 { 
-                return handleError(err);
+                throw err;
                 }
             });
         })
       .catch((err) =>{res.send(err);});
 }
 
+exports.removeItemById = (model, res) => {
+    return state.findOneAndUpdate({
+        _id : model.state
+      }, {$pull : {items : {_id : model.item}}},function(err, response) {
+            console.log(response)
+            res.send({items : response.items});
+            if (err)
+            { 
+                throw err;
+            }
+      })
+      .catch((err) =>{res.send(err);});
+}
+
+exports.updateStateTittle = (model, res) => {
+    return state.findOneAndUpdate({
+        _id : model.id
+    }, {$set : {tittle : model.newTittle}}, function(err, response) {
+        console.log(response)
+        res.send({resp : "state updated succesfully."});
+        if (err)
+        { 
+          throw err;
+        }
+    })
+    .catch((err) =>{res.send(err);});   
+}
+
+exports.updateItem = (model, res) => {
+    return state.findOneAndUpdate({
+        _id : model.id, "items._id" : model.item
+    }, {$set : {"items.$.tittle" : model.tittle, "items.$.description" : model.description}} ,function(err, response) {
+        console.log(response)
+        res.send({resp : "item updated succesfully."});
+        if (err)
+        { 
+          throw err;
+        }
+    })
+    .catch((err) =>{res.send(err);});   
+}
